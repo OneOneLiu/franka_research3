@@ -9,7 +9,7 @@
 - **Franka ROS 2**：在镜像构建阶段已克隆 [franka_ros2 `jazzy` 分支](https://github.com/frankarobotics/franka_ros2/tree/jazzy)、拉取 `dependency.repos`、执行 `rosdep` 与 **`colcon build`**，工作空间位于容器内 **`/franka_ros2_ws`**
 - **MoveIt 2**：**未在 Dockerfile 里单独写 apt 安装**；在 **`rosdep install --from-paths src`** 解析 `franka_ros2`（含 **`franka_fr3_moveit_config`** 等）依赖时，会 **自动装上** 一组 **`ros-jazzy-moveit-*` 软件包**（如 `moveit-core`、`moveit-ros-move-group`、`moveit-ros-planning-interface` 等）。因此构建完成后 **已具备 MoveIt**，可直接使用文档中的 **`moveit.launch.py`**，无需再单独安装 MoveIt。
 
-构建与运行方式见 [`docker/`](docker/)（`build.bash`、`run_container.bash`）。
+构建与运行方式见 [`docker/`](docker/)（`build.bash`、`run_container.bash`）。**中国大陆用户**构建镜像时建议使用清华镜像源脚本 **`docker/build_tshinghua.sh`**（对应 `Dockerfile.tsinghua`），详见 [`docker/README.md`](docker/README.md)。
 
 ## 1.2 使用本 Dockerfile 构建后能得到什么
 

@@ -15,9 +15,11 @@
 | 镜像标签 | `franka_docker` |
 | 容器名 | `franka_docker` |
 
-修改标签时，请同步修改 `build.bash` 与 `run_container.bash` 中的名称。
+修改标签时，请同步修改 `build.bash`、`build_tshinghua.sh` 与 `run_container.bash` 中的名称。
 
 ## 构建镜像
+
+### 默认（官方 Ubuntu / packages.ros.org 源）
 
 在 **`docker/` 目录下**执行：
 
@@ -25,7 +27,21 @@
 bash build.bash
 ```
 
-等价于：`docker build . -t franka_docker`（可通过 Dockerfile 顶部 `ARG ISAACSIM_VERSION` 调整 Isaac Sim 版本，默认 `6.0.0-dev2`）。
+等价于：`docker build . -t franka_docker`（可通过 `Dockerfile` 顶部 `ARG ISAACSIM_VERSION` 调整 Isaac Sim 版本，默认 `6.0.0-dev2`）。
+
+### 中国大陆网络（清华大学镜像源）
+
+使用与主 **`Dockerfile` 功能相同** 的备份文件 **`Dockerfile.tsinghua`**：构建前将 **Ubuntu apt**、**ROS 2 apt**（`packages.ros.org` → 清华）以及 **pip**（PyPI）指向 [清华大学开源软件镜像站](https://mirrors.tuna.tsinghua.edu.cn/)，以加速 `apt` / `rosdep` 中涉及的 pip 等步骤。
+
+在 **`docker/` 目录下**执行：
+
+```bash
+bash build_tshinghua.sh
+```
+
+等价于：`docker build -f Dockerfile.tsinghua . -t franka_docker`。
+
+**说明：** `rosdep update`、`git clone`、`curl`（如从 GitHub 获取 `ros-apt-source` 版本信息）仍依赖外网；若仅 apt/ros2 慢，用本脚本通常有明显改善。镜像名仍为 **`franka_docker`**，与 `run_container.bash` 一致。
 
 ## 启动容器
 
