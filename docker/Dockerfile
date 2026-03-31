@@ -1,5 +1,5 @@
 ARG DEBIAN_FRONTEND=noninteractive
-ARG ISAACSIM_VERSION=6.0.0-dev2
+ARG ISAACSIM_VERSION=5.1.0
 
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim
 FROM nvcr.io/nvidia/isaac-sim:${ISAACSIM_VERSION}
@@ -64,9 +64,11 @@ RUN mkdir -p ${FRANKA_ROS2_WS} && cd ${FRANKA_ROS2_WS} && \
 
 # =============================================================================
 # 4 — 工作空间：rosdep、libfranka 单测所需 gtest/gmock、colcon 全量编译
+# （上一阶段 apt 曾清理 lists；rosdep install 前须先 apt-get update，否则无法解析 ros-jazzy-*）
 # =============================================================================
 RUN rosdep init 2>/dev/null || true && \
     rosdep update && \
+    apt-get update && \
     bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /franka_ros2_ws; \
         rosdep install --from-paths src --ignore-src --rosdistro jazzy -y' && \
     apt-get update && \
