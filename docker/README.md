@@ -1,6 +1,6 @@
 # Docker（Isaac Sim + 后续 ROS 2）
 
-本目录用于构建与运行 **Franka Research 3** 相关开发环境。镜像基于 NVIDIA **Isaac Sim 6.0.0-dev2**（见 [NGC：isaac-sim](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim)）。
+本目录用于构建与运行 **Franka Research 3** 相关开发环境。镜像基于 NVIDIA **Isaac Sim 5.1.0**（见 [NGC：isaac-sim](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim)；Dockerfile 中 `ARG ISAACSIM_VERSION` 默认与此一致，可自行改为其他标签）。
 
 ## 前置条件
 
@@ -27,7 +27,7 @@
 bash build.bash
 ```
 
-等价于：`docker build . -t franka_docker`（可通过 `Dockerfile` 顶部 `ARG ISAACSIM_VERSION` 调整 Isaac Sim 版本，默认 `6.0.0-dev2`）。
+等价于：`docker build . -t franka_docker`（可通过 `Dockerfile` 顶部 `ARG ISAACSIM_VERSION` 调整 Isaac Sim 版本，默认 `5.1.0`）。
 
 ### 中国大陆网络（清华大学镜像源）
 
@@ -74,3 +74,16 @@ ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=dont-care use_fa
 真机与 FCI 注意点见 Franka 官方文档（网络、实时内核、避免 Docker Desktop 等）。
 
 更完整的仓库目标说明见根目录 [`README.md`](../README.md)。
+
+## 注意事项
+
+- **拉取 Isaac Sim 基础镜像（`nvcr.io/nvidia/isaac-sim`）**：须先登录 NVIDIA NGC 容器仓库，否则构建时拉取该层常见 **HTTP 403**。在终端执行：
+
+  ```bash
+  docker login nvcr.io
+  ```
+
+  - **用户名**：按 [NVIDIA NGC 说明](https://org.ngc.nvidia.com/setup/api-keys)，填写固定字面量 **`$oauthtoken`**（不是你的邮箱；若你使用的客户端允许省略用户名，以提示为准）。
+  - **密码**：在 [NGC — API Keys](https://org.ngc.nvidia.com/setup/api-keys) 生成 **Personal API Key** 并粘贴。
+
+  登录成功后再执行 `bash build.bash` 或 `bash build_tshinghua.sh`。

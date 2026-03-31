@@ -4,7 +4,7 @@
 
 ## 1.1 环境与基镜像
 
-- **容器基镜像**：NVIDIA Isaac Sim **6.0.0-dev2**
+- **容器基镜像**：NVIDIA Isaac Sim **5.1.0**（与 `docker/Dockerfile` 中 `ISAACSIM_VERSION` 默认一致；拉取 `nvcr.io` 镜像、登录与 **403** 说明见 [`docker/README.md` — 注意事项](docker/README.md#注意事项)）
 - **ROS 2**：**Jazzy**（`ros-jazzy-desktop`、`ros-dev-tools`）
 - **Franka ROS 2**：在镜像构建阶段已克隆 [franka_ros2 `jazzy` 分支](https://github.com/frankarobotics/franka_ros2/tree/jazzy)、拉取 `dependency.repos`、执行 `rosdep` 与 **`colcon build`**，工作空间位于容器内 **`/franka_ros2_ws`**
 - **MoveIt 2**：**未在 Dockerfile 里单独写 apt 安装**；在 **`rosdep install --from-paths src`** 解析 `franka_ros2`（含 **`franka_fr3_moveit_config`** 等）依赖时，会 **自动装上** 一组 **`ros-jazzy-moveit-*` 软件包**（如 `moveit-core`、`moveit-ros-move-group`、`moveit-ros-planning-interface` 等）。因此构建完成后 **已具备 MoveIt**，可直接使用文档中的 **`moveit.launch.py`**，无需再单独安装 MoveIt。
@@ -60,4 +60,4 @@ ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=192.168.1.10 use
 
 ## 1.4 Docker
 
-镜像构建、启动、环境变量与 Franka 说明见 [`docker/README.md`](docker/README.md)。
+镜像构建、启动、环境变量、**NGC 登录（未登录拉取 Isaac 层易出现 403）** 与 Franka 说明见 [`docker/README.md`](docker/README.md)（文末 **注意事项**）。
