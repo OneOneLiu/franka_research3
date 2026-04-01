@@ -1,63 +1,89 @@
-# 1. Franka Research 3（ROS 2 + Isaac Sim）
+# Franka Research 3 + ROS 2（Docker）
 
-本仓库用于在 **ROS 2** 环境下搭建 **Franka Research 3** 相关能力，并通过 **Docker** 统一开发与运行环境。
+## 这是什么
 
-## 1.1 环境与基镜像
+本仓库提供 **Docker 镜像**，在容器里装好 **ROS 2 Jazzy**、**Franka ROS 2（FR3）**，用于在 **无真机** 时用假硬件跑 MoveIt，或在 **有真机** 时连接 Franka 做规划与控制。镜像基于 **NVIDIA Isaac Sim 5.1.0** 层，便于与 Isaac 生态对齐；日常 Franka 开发主要用容器内的 ROS 2 工作空间 **`/franka_ros2_ws`**。
 
-- **容器基镜像**：NVIDIA Isaac Sim **5.1.0**（与 `docker/Dockerfile` 中 `ISAACSIM_VERSION` 默认一致；拉取 `nvcr.io` 镜像、登录与 **403** 说明见 [`docker/README.md` — 注意事项](docker/README.md#注意事项)）
-- **ROS 2**：**Jazzy**（`ros-jazzy-desktop`、`ros-dev-tools`）
-- **Franka ROS 2**：在镜像构建阶段已克隆 [franka_ros2 `jazzy` 分支](https://github.com/frankarobotics/franka_ros2/tree/jazzy)、拉取 `dependency.repos`、执行 `rosdep` 与 **`colcon build`**，工作空间位于容器内 **`/franka_ros2_ws`**
-- **MoveIt 2**：**未在 Dockerfile 里单独写 apt 安装**；在 **`rosdep install --from-paths src`** 解析 `franka_ros2`（含 **`franka_fr3_moveit_config`** 等）依赖时，会 **自动装上** 一组 **`ros-jazzy-moveit-*` 软件包**（如 `moveit-core`、`moveit-ros-move-group`、`moveit-ros-planning-interface` 等）。因此构建完成后 **已具备 MoveIt**，可直接使用文档中的 **`moveit.launch.py`**，无需再单独安装 MoveIt。
+---
 
-构建与运行方式见 [`docker/`](docker/)（`build.bash`、`run_container.bash`）。**中国大陆用户**构建镜像时建议使用清华镜像源脚本 **`docker/build_tshinghua.sh`**（对应 `Dockerfile.tsinghua`），详见 [`docker/README.md`](docker/README.md)。
+## 安装（构建镜像）
 
-## 1.2 使用本 Dockerfile 构建后能得到什么
+1. 安装 **Docker**、**NVIDIA 驱动**，并配置 **NVIDIA Container Toolkit**（需 GPU 时见 [`docker/README.md`](docker/README.md) 前置条件）。
+2. 在仓库里进入 **`docker/`** 目录，执行其一：
+   - **常规构建**：`bash build.bash`
+   - **中国大陆网络（清华镜像等）**：`bash build_tshinghua.sh`（使用 `Dockerfile.tsinghua`）
 
-按 [`docker/Dockerfile`](docker/Dockerfile) **完整构建成功**并进入容器后，环境已包含 **ROS 2 Jazzy** 与 **编译好的 franka_ros2**，可直接做 **无真机（假硬件 / dummy hardware）** 下的 MoveIt 等验证，**无需再手动 clone 与 colcon**（除非你要改源码重编）。
+构建时间较长；拉取 Isaac 基础镜像需 **NVIDIA NGC 登录**，否则常见 **403**，见下文「注意事项」。
 
-容器启动时会通过 [`docker/entrypoint.sh`](docker/entrypoint.sh) 自动 `source` `/opt/ros/jazzy` 与 `/franka_ros2_ws/install`。
+更细的参数、环境变量与故障说明见 **[`docker/README.md`](docker/README.md)**。
 
-### 1.2.1 无真机测试命令
+---
 
-在容器内执行（需要 **图形界面** 时请用 `docker/run_container.bash` 等方式把 **X11 / `DISPLAY`** 配好，以便打开 RViz）：
+## 使用
+
+### 启动并进入容器
+
+在 **`docker/`** 下执行：
+
+```bash
+bash run_container.bash
+```
+
+需要 **RViz / 图形界面**时，请按 [`docker/README.md`](docker/README.md) 配置 **X11 / `DISPLAY`**（脚本里可能已含 `xhost` 等辅助）。
+
+容器启动后会通过 [`docker/entrypoint.sh`](docker/entrypoint.sh) 自动 `source` **`/opt/ros/jazzy`** 与 **`/franka_ros2_ws/install`**。
+
+### 无真机：假硬件跑 MoveIt
+
+在 **容器内**执行：
 
 ```bash
 ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true
 ```
 
-### 1.2.2 真机测试前须完成的工作
+### 真机：连机器人
 
-以下不满足时，通常 **无法控制真机**：
-
-| 类别 | 说明 |
-|------|------|
-| 网络 | 宿主机/容器能访问 **Franka Desk** 所在网络的 **机器人 IP**（launch 里的 `robot_ip` 即连这一地址）；使用 `run_container.bash` 的 **`--net=host`** 时与宿主机共用网络栈。 |
-| 参数 | Launch 中使用 **真实 `robot_ip`**，并 **关闭假硬件**（`use_fake_hardware:=false`）。 |
-| Desk / FCI（机器人侧，非只在电脑上改） | **是**：Franka 文档里的 **Desk** 指 **机器人自带的控制系统与管理界面**（含网页等），**不是** 只在你的 PC 里改 launch 就能替代。Franka 机型一般 **没有** 传统工业机器人那种 **独立大型控制柜**，多为 **随臂配套的小型控制器/电控单元**（具体形态以官方说明与实物为准）。在这些界面（通常用浏览器访问 **机器人 IP** 打开 **Desk 网页**，或 **机载屏幕**）上完成：启用 **FCI**、**解锁**、**允许外部控制** 等。菜单名称与流程以 Franka 官方 **装机 / FCI** 文档为准。 |
-| 版本（机器人侧软件 ↔ 电脑端 libfranka） | **不只是在机器人上点一项开关**：**机器人侧**运行 Franka **系统软件 / 固件**（由官方升级与维护）；**电脑 / Docker 侧**编译 **`libfranka`**（本镜像由 `dependency.repos` 固定版本）。两者须在官方 **兼容范围** 内，否则易 **连不上或报版本错误**。升级机器人侧软件后，常需 **对照官方说明** 调整 `libfranka` 并重编工作空间。 |
-
-以下主要影响 **通信稳定性、是否易出现 UDP 超时**，属于 **强烈建议**，但不是「绝对连一次都连不上」的唯一条件：
-
-- 宿主机使用 **PREEMPT_RT** 等实时内核并按要求配置  
-- **避免使用 Docker Desktop** 跑对实时敏感的控制；**Linux + Docker Engine** 更合适  
-
-### 1.2.3 真机测试示例 Launch
-
-将 **`192.168.1.10`** 换成你的 **机器人 / Desk 在局域网中的 IP**（与浏览器访问 Desk 网页时用的地址一致）：
+把 **`192.168.1.10`** 换成机器人 / Desk 在局域网中的 **真实 IP**，并关闭假硬件：
 
 ```bash
 ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=192.168.1.10 use_fake_hardware:=false
 ```
 
-更复杂的 bringup、多机、夹爪参数等见 [franka_ros2 文档](https://github.com/frankarobotics/franka_ros2/tree/jazzy)（如 `franka_bringup`、`franka.config.yaml`）。
+真机前必须在 **机器人侧**（Desk / FCI 等）完成解锁与允许外部控制；版本需与 **libfranka** 兼容。详见下方「注意事项」。
 
-## 1.3 规划能力
+---
 
-| 方向 | 说明 |
+## 注意事项与补充
+
+### 镜像里大致有什么
+
+| 内容 | 说明 |
 |------|------|
-| **运动规划与控制** | 基于 ROS 2 的机器人运动规划、控制接口与节点 |
-| **仿真** | 与 **Isaac Sim** 对接，支持在仿真中验证规划与控制 |
+| ROS 2 | **Jazzy**（`ros-jazzy-desktop` 等） |
+| Franka | 构建时克隆 [franka_ros2 `jazzy` 分支](https://github.com/frankarobotics/franka_ros2/tree/jazzy)，在 **`/franka_ros2_ws`** 内 **`colcon build`** 完成 |
+| MoveIt 2 | 未在 Dockerfile 里单独写死包名；**`rosdep install --from-paths src`** 解析 `franka_ros2` 时会自动装上所需 **`ros-jazzy-moveit-*`**，一般无需再手动装 MoveIt |
+| Isaac Sim | 作为 **Docker 基镜像版本**（默认 **5.1.0**），与 Isaac 工作流对接时使用 |
 
-## 1.4 Docker
+### Docker：构建、运行、403、国内镜像
 
-镜像构建、启动、环境变量、**NGC 登录（未登录拉取 Isaac 层易出现 403）** 与 Franka 说明见 [`docker/README.md`](docker/README.md)（文末 **注意事项**）。
+- 镜像名默认 **`franka_docker`**；构建、运行脚本与 **NGC 登录、403**、挂载目录等见 **[`docker/README.md`](docker/README.md)**（含 **注意事项** 一节）。
+
+### 真机前建议核对
+
+| 项目 | 说明 |
+|------|------|
+| 网络 | 本机/容器能访问机器人 **IP**；`run_container.bash` 使用 **`--net=host`** 时与宿主机同网 |
+| Launch | **`robot_ip`** 为真实地址，**`use_fake_hardware:=false`** |
+| Desk / FCI | **Desk** 指机器人侧控制与管理界面（常通过浏览器访问机器人 **IP**）。需在机器人上启用 **FCI**、解锁、允许外部控制等，**不是**只改电脑上的 launch 即可 |
+| 版本 | 机器人 **系统软件 / 固件** 与电脑侧 **`libfranka`**（本仓库由 `dependency.repos` 固定）须在官方 **兼容范围** 内；升级机器人软件后常需对照说明调整并重编 |
+
+对 **UDP 超时、实时性** 更敏感时：**Linux + Docker Engine** 通常优于 Docker Desktop；宿主机使用 **PREEMPT_RT** 等更稳妥（非绝对前提）。
+
+### 规划与仿真方向
+
+- **运动规划与控制**：ROS 2 下的规划、控制接口与节点。  
+- **仿真**：可与 **Isaac Sim** 对接做仿真验证（具体对接方式以你使用的 Isaac / 桥接方案为准）。
+
+### 更多文档
+
+- 多机、夹爪、`franka_bringup`、`franka.config.yaml` 等见 [franka_ros2 文档（jazzy）](https://github.com/frankarobotics/franka_ros2/tree/jazzy)。
