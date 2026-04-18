@@ -51,6 +51,8 @@ bash build_tshinghua.sh
 bash run_container.bash
 ```
 
+脚本会把 **`docker/` 的上一级目录**（本仓库根）挂载到容器 **`/ros2_ws/src/<该目录名>`**（例如 `.../franka_research3` → `/ros2_ws/src/franka_research3`），与镜像里已有的 `franka_ros2` 源码并列。
+
 其他说明：
 
 - 需同意 Omniverse 相关条款：脚本中已设置 `ACCEPT_EULA=Y`、`PRIVACY_CONSENT=Y`、`OMNI_ENV_PRIVACY_CONSENT=1`。

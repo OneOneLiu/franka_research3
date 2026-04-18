@@ -1,6 +1,12 @@
 IMAGE=franka_docker
 CONTAINER_NAME=franka_docker
 
+# 本仓库根目录（含 docker/ 的上一级），挂载到容器内 /ros2_ws/src/<同名目录>
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+WORKSPACE_HOST="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PKG_NAME="$(basename "${WORKSPACE_HOST}")"
+MOUNT_DST="/ros2_ws/src/${PKG_NAME}"
+
 if ! docker image inspect "$IMAGE" &>/dev/null; then
     echo "本地没有镜像「${IMAGE}」。请先在 docker 目录执行: bash build.bash" >&2
     exit 1
@@ -21,6 +27,7 @@ docker run -it \
     --privileged \
     --volume="/home/$USER/.ssh_docker:/root/.ssh/" \
     --volume="/home/$USER/.gitconfig:/root/.gitconfig:rw" \
+    --volume="${WORKSPACE_HOST}:${MOUNT_DST}:rw" \
     -e "ACCEPT_EULA=Y" \
     --runtime=nvidia \
     --gpus all \
