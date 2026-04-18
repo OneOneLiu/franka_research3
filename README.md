@@ -11,7 +11,7 @@
 1. 安装 **Docker**、**NVIDIA 驱动**，并配置 **NVIDIA Container Toolkit**（需 GPU 时见 [`docker/README.md`](docker/README.md) 前置条件）。
 2. 在仓库里进入 **`docker/`** 目录，执行其一：
    - **常规构建**：`bash build.bash`
-   - **中国大陆网络（清华镜像等）**：`bash build_tshinghua.sh`（使用 `Dockerfile.tsinghua`）
+   - **中国大陆网络（清华镜像等）**：`bash build_tshinghua.sh`（与 `Dockerfile` 相同，传入 `USE_CN_MIRROR=1`）
 
 构建时间较长；拉取 Isaac 基础镜像需 **NVIDIA NGC 登录**，否则常见 **403**，见下文「注意事项」。
 

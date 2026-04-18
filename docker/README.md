@@ -31,7 +31,7 @@ bash build.bash
 
 ### 中国大陆网络（清华大学镜像源）
 
-使用与主 **`Dockerfile` 功能相同** 的备份文件 **`Dockerfile.tsinghua`**：构建前将 **Ubuntu apt**、**ROS 2 apt**（`packages.ros.org` → 清华）以及 **pip**（PyPI）指向 [清华大学开源软件镜像站](https://mirrors.tuna.tsinghua.edu.cn/)，以加速 `apt` / `rosdep` 中涉及的 pip 等步骤。
+与默认构建共用 **`Dockerfile`**，通过 **`USE_CN_MIRROR=1`** 在构建前将 **Ubuntu apt**、**ROS 2 apt**（`packages.ros.org` → 清华）以及 **pip**（PyPI，写入 `/etc/pip.conf`）指向 [清华大学开源软件镜像站](https://mirrors.tuna.tsinghua.edu.cn/)，以加速 `apt` / `rosdep` 中涉及的 pip 等步骤。
 
 在 **`docker/` 目录下**执行：
 
@@ -39,7 +39,7 @@ bash build.bash
 bash build_tshinghua.sh
 ```
 
-等价于：`docker build -f Dockerfile.tsinghua . -t franka_docker`。
+等价于：`docker build --build-arg USE_CN_MIRROR=1 . -t franka_docker`。
 
 **说明：** `rosdep update`、`git clone`、`curl`（如从 GitHub 获取 `ros-apt-source` 版本信息）仍依赖外网；若仅 apt/ros2 慢，用本脚本通常有明显改善。镜像名仍为 **`franka_docker`**，与 `run_container.bash` 一致。
 

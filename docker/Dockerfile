@@ -12,6 +12,37 @@ WORKDIR /isaac-sim
 # 基础镜像常为普通用户；apt 与系统安装需 root。
 USER root
 
+# 中国大陆：构建时传入 --build-arg USE_CN_MIRROR=1（见 build_tshinghua.sh）启用清华
+# Ubuntu apt / ROS 2 apt / pip 镜像；默认 0 与官方源一致。
+ARG USE_CN_MIRROR=0
+
+# =============================================================================
+# 0 — 可选：国内网络（Ubuntu apt、pip；ROS 2 apt 在安装 ros2-apt-source 后再替换）
+# https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/
+# https://mirrors.tuna.tsinghua.edu.cn/help/ros2/
+# https://mirrors.tuna.tsinghua.edu.cn/help/pypi/
+# =============================================================================
+RUN if [ "$USE_CN_MIRROR" = "1" ]; then \
+        bash -c 'set -eux; shopt -s nullglob; \
+        for f in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do \
+            [ -e "$$f" ] || continue; \
+            sed -i \
+                -e "s|http://archive.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn|g" \
+                -e "s|https://archive.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g" \
+                -e "s|http://security.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn|g" \
+                -e "s|https://security.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g" \
+                -e "s|http://ports.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn|g" \
+                -e "s|https://ports.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g" \
+                "$$f"; \
+        done' && \
+        printf '%s\n' \
+            '[global]' \
+            'index-url = https://pypi.tuna.tsinghua.edu.cn/simple' \
+            'trusted-host = pypi.tuna.tsinghua.edu.cn' \
+            'timeout = 100' \
+            > /etc/pip.conf; \
+    fi
+
 # =============================================================================
 # 1 — Isaac Sim 示例路径 + 通用编译 / 网络 / 图形调试工具
 # =============================================================================
@@ -48,6 +79,16 @@ RUN apt-get update && \
     curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb" && \
     apt-get install -y /tmp/ros2-apt-source.deb && \
     rm -f /tmp/ros2-apt-source.deb && \
+    if [ "$USE_CN_MIRROR" = "1" ]; then \
+        bash -c 'set -eux; shopt -s nullglob; \
+        for f in /etc/apt/sources.list.d/ros2*.list /etc/apt/sources.list.d/ros2*.sources; do \
+            [ -e "$$f" ] || continue; \
+            sed -i \
+                -e "s|http://packages.ros.org/ros2/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu|g" \
+                -e "s|https://packages.ros.org/ros2/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu|g" \
+                "$$f"; \
+        done'; \
+    fi && \
     apt-get update && apt-get upgrade -y && \
     apt-get install -y ros-dev-tools ros-jazzy-desktop && \
     rm -rf /var/lib/apt/lists/*
@@ -56,9 +97,9 @@ RUN apt-get update && \
 # 3 — Franka ROS 2 源码：jazzy 主仓库 + dependency.repos（libfranka 等）
 # 参考：https://github.com/frankarobotics/franka_ros2/tree/jazzy
 # =============================================================================
-ENV FRANKA_ROS2_WS=/franka_ros2_ws
+ENV ROS2_WS=/ros2_ws
 
-RUN mkdir -p ${FRANKA_ROS2_WS} && cd ${FRANKA_ROS2_WS} && \
+RUN mkdir -p ${ROS2_WS} && cd ${ROS2_WS} && \
     git clone -b jazzy --depth 1 https://github.com/frankarobotics/franka_ros2.git src && \
     vcs import src < src/dependency.repos --recursive --skip-existing
 
@@ -69,12 +110,12 @@ RUN mkdir -p ${FRANKA_ROS2_WS} && cd ${FRANKA_ROS2_WS} && \
 RUN rosdep init 2>/dev/null || true && \
     rosdep update && \
     apt-get update && \
-    bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /franka_ros2_ws; \
+    bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /ros2_ws; \
         rosdep install --from-paths src --ignore-src --rosdistro jazzy -y' && \
     apt-get update && \
     apt-get install -y libgtest-dev libgmock-dev && \
     rm -rf /var/lib/apt/lists/* && \
-    bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /franka_ros2_ws; \
+    bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /ros2_ws; \
         colcon build --symlink-install \
             --allow-overriding controller_manager hardware_interface realtime_tools \
             --cmake-args -DCMAKE_BUILD_TYPE=Release'
@@ -84,7 +125,7 @@ RUN rosdep init 2>/dev/null || true && \
 # =============================================================================
 RUN printf '%s\n' \
     'source /opt/ros/jazzy/setup.bash' \
-    '[ -f /franka_ros2_ws/install/setup.bash ] && source /franka_ros2_ws/install/setup.bash' \
+    '[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash' \
     >> /root/.bashrc
 
 COPY entrypoint.sh /entrypoint.sh
