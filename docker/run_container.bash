@@ -6,9 +6,6 @@ if ! docker image inspect "$IMAGE" &>/dev/null; then
     exit 1
 fi
 
-# 同名容器已存在时 docker run 会失败（例如上次异常退出未删容器）
-docker rm -f "$CONTAINER_NAME" &>/dev/null || true
-
 xhost +
 XAUTH=/tmp/.docker.xauth
 docker run -it \
@@ -30,14 +27,6 @@ docker run -it \
     -e "PRIVACY_CONSENT=Y" \
     -e "OMNI_ENV_PRIVACY_CONSENT=1" \
     -e "OMNI_KIT_ALLOW_ROOT=1" \
-    -v ~/docker/isaac-sim/cache/kit:/isaac-sim/kit/cache:rw \
-    -v ~/docker/isaac-sim/cache/ov:/root/.cache/ov:rw \
-    -v ~/docker/isaac-sim/cache/pip:/root/.cache/pip:rw \
-    -v ~/docker/isaac-sim/cache/glcache:/root/.cache/nvidia/GLCache:rw \
-    -v ~/docker/isaac-sim/cache/computecache:/root/.nv/ComputeCache:rw \
-    -v ~/docker/isaac-sim/logs:/root/.nvidia-omniverse/logs:rw \
-    -v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
-    -v ~/docker/isaac-sim/documents:/root/Documents:rw \
     "$IMAGE"
 
 echo "Done."

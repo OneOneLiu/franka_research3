@@ -51,8 +51,6 @@ bash build_tshinghua.sh
 bash run_container.bash
 ```
 
-脚本会挂载 Isaac Sim 常用缓存与数据目录到 **`~/docker/isaac-sim/`** 下（`kit`、`ov`、`pip`、`GLCache`、`ComputeCache`、`logs`、`data`、`documents` 等）。首次运行前若目录不存在，Docker 会按需创建；也可提前手动创建以便权限清晰。
-
 其他说明：
 
 - 需同意 Omniverse 相关条款：脚本中已设置 `ACCEPT_EULA=Y`、`PRIVACY_CONSENT=Y`、`OMNI_ENV_PRIVACY_CONSENT=1`。
