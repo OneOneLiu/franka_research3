@@ -34,6 +34,7 @@ docker run -it \
     -e "PRIVACY_CONSENT=Y" \
     -e "OMNI_ENV_PRIVACY_CONSENT=1" \
     -e "OMNI_KIT_ALLOW_ROOT=1" \
+    -e "DEV_GIT_SAFE_DIR=${MOUNT_DST}" \
     "$IMAGE"
 
 echo "Done."

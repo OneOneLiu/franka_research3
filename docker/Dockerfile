@@ -7,9 +7,8 @@ FROM nvcr.io/nvidia/isaac-sim:${ISAACSIM_VERSION}
 ENV MIN_DRIVER_VERSION=525.60.11
 ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /isaac-sim
+WORKDIR /ros2_ws
 
-# 基础镜像常为普通用户；apt 与系统安装需 root。
 USER root
 
 # 中国大陆：构建时传入 --build-arg USE_CN_MIRROR=1（见 build_tshinghua.sh）启用清华
@@ -46,7 +45,7 @@ RUN if [ "$USE_CN_MIRROR" = "1" ]; then \
 # =============================================================================
 # 1 — Isaac Sim 示例路径 + 通用编译 / 网络 / 图形调试工具
 # =============================================================================
-RUN ln -s exts/omni.isaac.examples/omni/isaac/examples extension_examples && \
+RUN ln -s /isaac-sim/exts/omni.isaac.examples/omni/isaac/examples extension_examples && \
     apt-get update && apt-get upgrade -y && \
     apt-get install -y \
         wget \
@@ -101,7 +100,8 @@ ENV ROS2_WS=/ros2_ws
 
 RUN mkdir -p ${ROS2_WS} && cd ${ROS2_WS} && \
     git clone -b jazzy --depth 1 https://github.com/frankarobotics/franka_ros2.git src && \
-    vcs import src < src/dependency.repos --recursive --skip-existing
+    vcs import src < src/dependency.repos --recursive --skip-existing && \
+    rm -rf src/controller_manager src/hardware_interface src/realtime_tools src/gz-ros2-control
 
 # =============================================================================
 # 4 — 工作空间：rosdep、libfranka 单测所需 gtest/gmock、colcon 全量编译
@@ -127,6 +127,8 @@ RUN printf '%s\n' \
     'source /opt/ros/jazzy/setup.bash' \
     '[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash' \
     >> /root/.bashrc
+
+# RUN echo "hello"
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
