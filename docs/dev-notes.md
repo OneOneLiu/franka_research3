@@ -15,7 +15,14 @@
 
 - 调试入口：`/ros2_ws/src/franka_fr3_moveit_config/launch/move_group.launch.py`。
 - 现象：MoveIt 能规划但不能执行（mock component 问题）。
-- 修复：将 `/ros2_ws/src/franka_fr3_moveit_config/config/fr3_ros_controllers.yaml` 中 `arm_controller.command_interfaces` 改为 `position`。
+- 修复：将 `/ros2_ws/src/franka_fr3_moveit_config/config/fr3_ros_controllers.yaml` 中 `arm_controller.command_interfaces` 改为 `position`。但是控制实际机器人还是要用effort，安全一点。
 - `move_group.launch.py` 会 include `gripper.launch.py`。
 - `gripper.launch.py` 在 `use_fake_hardware:=true` 时启动 `fake_gripper_state_publisher.py`，该节点不提供 action server。
 - 因此 fake 模式会出现“有 client 没 server”，夹爪不执行动作。
+- `franka_fr3_moveit_config` 里 **ompl_planning** 配置中规划组名仍为 **`panda_arm` / `panda_hand`**（与 FR3 不符）；应改为 **`fr3_arm` / `fr3_hand`**，RViz 里才能正常使用不同 OMPL 规划器。
+
+## FR3 夹爪 vs UR/Robotiq（MoveIt 侧）
+
+- FR3 夹爪不经由与 UR+Robotiq 那套相同的 **ros2_control 控制器链路** 去驱动，而是 **直接走 action server**；action 名：**`fr3_gripper`**。
+- `ros2_controllers` 相关配置里往往 **只体现夹爪侧控制器定义**；**MoveIt 的 `moveit_controllers` 里出现夹爪“控制器”** 时，含义是：**MoveIt 应去请求哪个 action**，定义到这一步即可，与上述机制一致。
+- 更细的「MoveIt 要改哪些文件、各自干什么」见 Obsidian 笔记：**《用moveit控制机器人的文件澄清》**。
