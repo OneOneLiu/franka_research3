@@ -111,12 +111,12 @@ RUN rosdep init 2>/dev/null || true && \
     rosdep update && \
     apt-get update && \
     bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /ros2_ws; \
-        rosdep install --from-paths src --ignore-src --rosdistro jazzy -y' && \
+        rosdep install --from-paths src --ignore-src --rosdistro jazzy -y --skip-keys "zed_wrapper"' && \
     apt-get update && \
     apt-get install -y libgtest-dev libgmock-dev && \
     rm -rf /var/lib/apt/lists/* && \
     bash -c 'set -e; source /opt/ros/jazzy/setup.bash; cd /ros2_ws; \
-        colcon build --symlink-install \
+        colcon build \
             --allow-overriding controller_manager hardware_interface realtime_tools \
             --cmake-args -DCMAKE_BUILD_TYPE=Release'
 
