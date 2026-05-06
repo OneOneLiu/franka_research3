@@ -2,24 +2,28 @@
 
 ## 这是什么
 
-本仓库提供 **Docker 镜像**，在容器里装好 **ROS 2 Jazzy**、**Franka ROS 2（FR3）**，用于在 **无真机** 时用假硬件跑 MoveIt，或在 **有真机** 时连接 Franka 做规划与控制。镜像基于 **NVIDIA Isaac Sim 5.1.0** 层，便于与 Isaac 生态对齐；日常 Franka 开发主要用容器内的 ROS 2 工作空间 **`/franka_ros2_ws`**。
+本仓库提供用于控制和使用 Franka Research 3 机器人的docker环境镜像。已装好 **ROS 2 Jazzy**、**Franka ROS 2（FR3）**等软件环境。镜像基于 **NVIDIA Isaac Sim 5.1.0** 层，便于与 Isaac 生态对齐；日常 Franka 开发主要用容器内的 ROS 2 工作空间 **`/ros2_ws`**。
 
 ---
 
-## 安装（构建镜像）
+## 1. 构建镜像
 
-1. 安装 **Docker**、**NVIDIA 驱动**，并配置 **NVIDIA Container Toolkit**（需 GPU 时见 [`docker/README.md`](docker/README.md) 前置条件）。
-2. 在仓库里进入 **`docker/`** 目录，执行其一：
+要使用本仓库，首先需要将其clone到本地构建镜像，具体步骤如下：
+
+1. 在仓库里进入 **`docker/`** 目录，执行其一：
    - **常规构建**：`bash build.bash`
    - **中国大陆网络（清华镜像等）**：`bash build_tshinghua.sh`（与 `Dockerfile` 相同，传入 `USE_CN_MIRROR=1`）
 
-构建时间较长；拉取 Isaac 基础镜像需 **NVIDIA NGC 登录**，否则常见 **403**，见下文「注意事项」。
+2. 注意事项：
+   - 本地环境需要安装 **Docker**、**NVIDIA 驱动**，并配置 **NVIDIA Container Toolkit**。
 
-更细的参数、环境变量与故障说明见 **[`docker/README.md`](docker/README.md)**。
+   - 构建时间可能较长；拉取 Isaac 基础镜像需 **NVIDIA NGC 登录**，否则常见 **403**，见下文「注意事项」。
+
+   - 其他参数、环境变量与故障说明见 **[`docker/README.md`](docker/README.md)**。
 
 ---
 
-## 使用
+## 2. 使用
 
 ### 启动并进入容器
 
@@ -28,10 +32,6 @@
 ```bash
 bash run_container.bash
 ```
-
-需要 **RViz / 图形界面**时，请按 [`docker/README.md`](docker/README.md) 配置 **X11 / `DISPLAY`**（脚本里可能已含 `xhost` 等辅助）。
-
-容器启动后会通过 [`docker/entrypoint.sh`](docker/entrypoint.sh) 自动 `source` **`/opt/ros/jazzy`** 与 **`/franka_ros2_ws/install`**。
 
 ### 无真机：假硬件跑 MoveIt
 
