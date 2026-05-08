@@ -101,7 +101,7 @@ ENV ROS2_WS=/ros2_ws
 RUN mkdir -p ${ROS2_WS} && cd ${ROS2_WS} && \
     git clone -b jazzy --depth 1 https://github.com/frankarobotics/franka_ros2.git src && \
     vcs import src < src/dependency.repos --recursive --skip-existing && \
-    rm -rf src/controller_manager src/hardware_interface src/realtime_tools src/gz-ros2-control
+    rm -rf src/controller_manager src/hardware_interface src/realtime_tools src/gz-ros2-control src/ros2_control
 
 # =============================================================================
 # 4 — 工作空间：rosdep、libfranka 单测所需 gtest/gmock、colcon 全量编译
