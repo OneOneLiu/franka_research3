@@ -104,7 +104,15 @@ RUN mkdir -p ${ROS2_WS} && cd ${ROS2_WS} && \
     rm -rf src/controller_manager src/hardware_interface src/realtime_tools src/gz-ros2-control src/ros2_control
 
 # =============================================================================
-# 4 — 工作空间：rosdep、libfranka 单测所需 gtest/gmock、colcon 全量编译
+# 4 — 额外 apt 包（后续新增系统/ROS 包可统一追加在这里）
+# =============================================================================
+RUN apt-get update && \
+    apt-get install -y \
+        ros-jazzy-moveit-servo && \
+    rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
+# 4.5 — 工作空间：rosdep、libfranka 单测所需 gtest/gmock、colcon 全量编译
 # （上一阶段 apt 曾清理 lists；rosdep install 前须先 apt-get update，否则无法解析 ros-jazzy-*）
 # =============================================================================
 RUN rosdep init 2>/dev/null || true && \
