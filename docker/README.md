@@ -66,7 +66,7 @@ bash run_container.bash
 
 ### Antigravity（Remote-SSH）
 
-与真机二选一即可。镜像内已含 `openssh-server`。在 `docker/` 执行 `bash run_container_ssh.bash`（默认把宿主机 **7522** 映射到容器 **22**，可用 `SSH_PORT` 改端口）。若用密码登录 Antigravity，可在启动时一步设置：`ROOT_PASSWORD='…' bash run_container_ssh.bash`（勿提交到 git）；不设则进容器后自行 **`passwd root`**。在本机 `~/.ssh/config` 配置 `HostName`、`Port`、`User root` 即可 Remote-SSH。
+与真机二选一即可。镜像内已含 `openssh-server`。在 `docker/` 执行 `bash run_container_ssh.bash`（仍使用 `--net=host`，sshd 直接监听宿主机 **7522** 端口，可用 `SSH_PORT` 改）。若用密码登录，可在启动时一步设置：`ROOT_PASSWORD='…' bash run_container_ssh.bash`（勿提交到 git）；不设则进容器后自行 **`passwd root`**。在本机 `~/.ssh/config` 配置 `HostName`、`Port 7522`、`User root` 即可 Remote-SSH。
 
 ## ROS 2 Jazzy 与 Franka ROS 2
 
