@@ -136,7 +136,12 @@ RUN printf '%s\n' \
     '[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash' \
     >> /root/.bashrc
 
-# RUN echo "hello"
+# Antigravity / Remote-SSH：配合 docker/run_container_ssh.bash 映射宿主机端口 → 容器 22
+RUN apt-get update && \
+    apt-get install -y openssh-server && \
+    mkdir -p /var/run/sshd && \
+    sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

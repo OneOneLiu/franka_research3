@@ -14,7 +14,7 @@
 | 项目   | 默认值             |
 | ---- | --------------- |
 | 镜像标签 | `franka_docker` |
-| 容器名  | `franka_docker` |
+| 容器名  | `franka_docker`（真机）或 `franka_docker_ssh`（SSH） |
 
 
 修改标签时，请同步修改 `build.bash`、`build_tshinghua.sh` 与 `run_container.bash` 中的名称。
@@ -63,6 +63,10 @@ bash run_container.bash
 - Dockerfile 使用 `**USER root`** 以便 `apt` 安装依赖；Omniverse Kit 默认禁止 root 启动，故脚本中设置 `**OMNI_KIT_ALLOW_ROOT=1**`（见容器内提示）。若改为镜像默认非 root 用户运行，可去掉此项并调整挂载路径（勿再挂到 `/root/...`）。
 - 可选挂载：`~/.ssh_docker` → 容器内 `/root/.ssh`，`~/.gitconfig` → 容器内 git 配置；若本机无对应路径，请先创建或从脚本中删去对应 `-v` 行。
 - `--device=/dev/ttyUSB0` 等与串口/硬件相关；无硬件时可按需注释。
+
+### Antigravity（Remote-SSH）
+
+与真机二选一即可。镜像内已含 `openssh-server`。在 `docker/` 执行 `bash run_container_ssh.bash`（默认把宿主机 **7522** 映射到容器 **22**，可用 `SSH_PORT` 改端口）。若用密码登录 Antigravity，可在启动时一步设置：`ROOT_PASSWORD='…' bash run_container_ssh.bash`（勿提交到 git）；不设则进容器后自行 **`passwd root`**。在本机 `~/.ssh/config` 配置 `HostName`、`Port`、`User root` 即可 Remote-SSH。
 
 ## ROS 2 Jazzy 与 Franka ROS 2
 
