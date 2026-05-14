@@ -143,6 +143,51 @@ RUN apt-get update && \
     sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     rm -rf /var/lib/apt/lists/*
 
+# =============================================================================
+# 6 — GELLO 特有依赖补充 (gello_software required)
+# =============================================================================
+
+# 6.1 — 系统与 ROS 扩展包
+RUN apt-get update && apt-get install -y \
+    ros-jazzy-pinocchio \
+    ros-jazzy-rmw-cyclonedds-cpp \
+    && rm -rf /var/lib/apt/lists/*
+
+# 6.2 — Python 核心驱动 (添加 --break-system-packages 绕过环境限制)
+RUN pip3 install --break-system-packages --ignore-installed \
+    dynamixel_sdk \
+    tyro \
+    numpy \
+    PyYAML
+
+
+# 6.3 — 源码编译：rqt_reconfigure (支持数组调节，GELLO 调试必备)
+RUN /bin/bash -c "source /opt/ros/jazzy/setup.bash && \
+    mkdir -p /tmp/gello_deps && cd /tmp/gello_deps && \
+    git clone https://github.com/ros-visualization/rqt_reconfigure.git && \
+    cd rqt_reconfigure && \
+    rosdep update && \
+    rosdep install --from-paths . --ignore-src -r -y && \
+    colcon build --install-base /opt/ros/jazzy/gello_deps --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    echo 'source /opt/ros/jazzy/gello_deps/setup.bash' >> ~/.bashrc"
+
+# 6.4 — 可选：Robotiq 夹爪驱动优化 (提升遥操作响应速度)
+RUN /bin/bash -c "source /opt/ros/jazzy/setup.bash && \
+    mkdir -p /tmp/robotiq_deps && cd /tmp/robotiq_deps && \
+    git clone https://github.com/PickNikRobotics/ros2_robotiq_gripper.git && \
+    cd ros2_robotiq_gripper && \
+    sed -i 's/kGripperMaxSpeed = 0.150;/kGripperMaxSpeed = 1.0;/g' robotiq_driver/src/hardware_interface.cpp && \
+    vcs import . --input ros2_robotiq_gripper.rolling.repos && \
+    rosdep update && \
+    rosdep install --from-paths . --ignore-src -r -y && \
+    colcon build --install-base /opt/ros/jazzy/gello_deps --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    rm -rf /tmp/robotiq_deps"
+
+# 设置环境变量，确保自定义编译的包优先
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
